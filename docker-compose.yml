@@ -12,12 +12,14 @@ x-common-labels: &default-labels
 
 services:
   traefik:
-    image: traefik:3.0
+    image: traefik:v2.11
     container_name: traefik
     ports:
       - 80:80 # HTTP port
       - 443:443 # HTTPS port
     restart: always
+    environment:
+      - DOCKER_API_VERSION=1.44
     labels:
       # Traefik configuration
       <<: *default-labels
@@ -92,12 +94,16 @@ services:
       traefik.http.routers.vnc-mt5-http.rule: Host(`${VNC_DOMAIN}`)
       traefik.http.routers.vnc-mt5-http.entrypoints: http
       traefik.http.routers.vnc-mt5-http.middlewares: https-redirect
+      traefik.http.routers.vnc-mt5-http.service: vnc-mt5-service
 
       traefik.http.routers.vnc-mt5-https.rule: Host(`${VNC_DOMAIN}`)
       traefik.http.routers.vnc-mt5-https.entrypoints: https
       traefik.http.routers.vnc-mt5-https.tls: true
       traefik.http.routers.vnc-mt5-https.tls.certresolver: le
       traefik.http.routers.vnc-mt5-https.service: vnc-mt5-service
+      traefik.http.routers.vnc-mt5-https.middlewares: vnc-permissions
+
+      traefik.http.middlewares.vnc-permissions.headers.customresponseheaders.Permissions-Policy: "clipboard-read=(*), clipboard-write=(*)"
 
       traefik.http.services.vnc-mt5-service.loadbalancer.server.port: 3000
 
@@ -105,6 +111,7 @@ services:
       traefik.http.routers.api-mt5-http.rule: Host(`${API_DOMAIN}`)
       traefik.http.routers.api-mt5-http.entrypoints: http
       traefik.http.routers.api-mt5-http.middlewares: https-redirect
+      traefik.http.routers.api-mt5-http.service: api-mt5-service
 
       traefik.http.routers.api-mt5-https.rule: Host(`${API_DOMAIN}`)
       traefik.http.routers.api-mt5-https.entrypoints: https
