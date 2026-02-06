@@ -6,6 +6,7 @@ from celery.exceptions import SoftTimeLimitExceeded
 
 from app.quant.algorithms.mean_reversion.entry import entry_algorithm
 from app.quant.algorithms.mean_reversion.trailing import trailing_stop_algorithm
+from app.quant.algorithms.ema_crossover.entry import ema_crossover_entry_algorithm
 from app.quant.algorithms.close.close import close_algorithm
 
 logger = logging.getLogger(__name__)
@@ -13,8 +14,10 @@ logger = logging.getLogger(__name__)
 @shared_task(name='quant.tasks.run_quant_entry_algorithm', max_retries=3, soft_time_limit=30)
 def run_quant_entry_algorithm():
     try:
-        logger.info("Starting quant entry algorithm...")
-        entry_algorithm()
+        # logger.info("Starting quant entry algorithm (Mean Reversion)...")
+        # entry_algorithm()
+        logger.info("Starting quant entry algorithm (EMA Crossover)...")
+        ema_crossover_entry_algorithm()
     except SoftTimeLimitExceeded:
         logger.error("Task timed out.")
     except Exception as e:
