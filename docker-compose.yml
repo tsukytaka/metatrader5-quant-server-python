@@ -78,6 +78,9 @@ services:
     container_name: mt5
     volumes:
       - ./config:/config
+    ports:
+      - 3001:3000
+      - 5001:5001
     networks:
       - traefik-public
       - default

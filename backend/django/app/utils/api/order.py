@@ -72,13 +72,22 @@ def send_market_order(symbol: str, volume: float, order_type: str, sl: float, tp
         error_msg = f"Exception sending market order for {symbol}: {str(e)}\n{traceback.format_exc()}"
         logger.error(error_msg)
     
-def modify_sl_tp(position, sl: float, tp: float = None) -> Dict:
+def modify_sl_tp(position=None, sl: float = None, tp: float = None, **kwargs) -> Dict:
     try:
+        # Handle cases where arguments are passed as keywords (from ModifySLTPView)
+        ticket = kwargs.get('ticket') or (position.ticket if hasattr(position, 'ticket') else position.get('ticket') if isinstance(position, dict) else position)
+        symbol = kwargs.get('symbol') or (position.symbol if hasattr(position, 'symbol') else position.get('symbol') if isinstance(position, dict) else None)
+        order_type = kwargs.get('type') or (position.type if hasattr(position, 'type') else position.get('type') if isinstance(position, dict) else None)
+        
+        # Override sl and tp if passed in kwargs (for stop_loss/take_profit naming)
+        sl = sl if sl is not None else kwargs.get('stop_loss')
+        tp = tp if tp is not None else kwargs.get('take_profit')
+
         request = {
-            "ticket": position.ticket,
-            "symbol": position.symbol,
-            'type': position.type,
-            "sl": float(sl),
+            "position": ticket,
+            "symbol": symbol,
+            'type': order_type,
+            "sl": float(sl) if sl is not None else None,
         }
 
         if tp is not None:
@@ -107,14 +116,14 @@ def modify_sl_tp(position, sl: float, tp: float = None) -> Dict:
             return None
 
     except requests.exceptions.HTTPError as e:
-        error_msg = f"HTTP error sending modify SL/TP for {position.ticket}: {e.response.text}"
+        error_msg = f"HTTP error sending modify SL/TP for {ticket}: {e.response.text}"
         logger.error(error_msg)
        
     except requests.exceptions.Timeout:
-        error_msg = f"Timeout sending modify SL/TP for {position.ticket}"
+        error_msg = f"Timeout sending modify SL/TP for {ticket}"
         logger.error(error_msg)
         return None
     
     except Exception as e:
-        error_msg = f"Exception sending modify SL/TP for {position.ticket}: {str(e)}\n{traceback.format_exc()}"
+        error_msg = f"Exception sending modify SL/TP for {ticket}: {str(e)}\n{traceback.format_exc()}"
         logger.error(error_msg)
